@@ -78,36 +78,36 @@ const GardenStories = () => {
         description: "Comprehensive study on the economic factors affecting software maintenance decisions."
       },
       {
-        title: "Technical Debt and Its Impact on Maintenance Costs",
+        title: "Technical Debt and Its Impact on Maintenance",
         source: "Martin Fowler's Blog",
         url: "https://martinfowler.com/bliki/TechnicalDebt.html",
-        description: "How technical debt accumulates and exponentially increases maintenance costs over time."
+        description: "How technical debt accumulates and affects maintenance efforts over time."
       },
       {
         title: "Refactoring: Improving the Design of Existing Code",
         source: "Martin Fowler",
         url: "https://refactoring.com/",
-        description: "Essential resource on refactoring practices that reduce maintenance costs."
+        description: "Essential resource on refactoring practices that reduce maintenance effort."
       }
     ],
     videos: [
       {
-        title: "Software Maintenance Explained in 10 Minutes",
+        title: "Software Maintenance Explained Simply",
         platform: "YouTube",
         url: "https://www.youtube.com/watch?v=AbgsfeGvg3E",
-        description: "Quick overview of software maintenance types and their importance."
+        description: "Clear overview of software maintenance types and their importance."
       },
       {
-        title: "The Hidden Costs of Software",
+        title: "The Hidden Work of Software Maintenance",
         platform: "YouTube",
         url: "https://www.youtube.com/watch?v=G4PRwAHUKNI",
-        description: "Why maintenance often costs 4-5 times more than initial development."
+        description: "Why maintenance is often undervalued but critical to software success."
       },
       {
-        title: "Reducing Technical Debt Through Continuous Refactoring",
+        title: "Reducing Technical Debt Through Refactoring",
         platform: "YouTube",
         url: "https://www.youtube.com/watch?v=1-Xoy5w5ydM",
-        description: "Practical approaches to reduce maintenance costs through ongoing code improvements."
+        description: "Practical approaches to improve maintainability through ongoing code improvements."
       },
       {
         title: "Legacy Code Maintenance Strategies",
@@ -119,39 +119,39 @@ const GardenStories = () => {
         title: "Software Maintenance Best Practices",
         platform: "YouTube",
         url: "https://www.youtube.com/watch?v=xvPuKfPE_Yg",
-        description: "Industry best practices that optimize maintenance processes and reduce costs."
+        description: "Industry best practices that optimize maintenance processes."
       }
     ],
     websites: [
       {
-        title: "Software Maintenance Guide",
-        organization: "CISQ",
-        url: "https://www.it-cisq.org/software-quality-resources",
-        description: "Comprehensive resources on measuring and improving software maintenance."
+        title: "Software Sustainability Guide",
+        organization: "Software Sustainability Institute",
+        url: "https://www.software.ac.uk/resources",
+        description: "Comprehensive resources on building sustainable software that's easier to maintain."
       },
       {
-        title: "ISO/IEC 14764:2006 - Software Maintenance",
+        title: "ISO/IEC 14764 - Software Maintenance",
         organization: "ISO",
         url: "https://www.iso.org/standard/39064.html",
         description: "International standard providing a framework for software maintenance processes."
       },
       {
-        title: "Software Maintenance Cost Estimator",
-        organization: "COCOMO II",
-        url: "http://csse.usc.edu/tools/COCOMOII.php",
-        description: "Tool for estimating software maintenance costs based on various factors."
+        title: "Software Evolution and Maintenance",
+        organization: "ACM SIGSOFT",
+        url: "https://www.sigsoft.org/resources.html",
+        description: "Research and resources on software evolution and maintenance practices."
       },
       {
-        title: "Maintenance Cost Reduction Strategies",
-        organization: "NIST",
-        url: "https://www.nist.gov/",
-        description: "Government resources on reducing software maintenance costs through standardization."
+        title: "Maintenance Excellence Network",
+        organization: "Software Engineering Institute",
+        url: "https://www.sei.cmu.edu/",
+        description: "Resources on maintaining complex software systems effectively."
       },
       {
-        title: "Software Sustainability Institute",
-        organization: "SSI",
-        url: "https://www.software.ac.uk/",
-        description: "Research and resources dedicated to improving software sustainability and reducing long-term maintenance costs."
+        title: "Agile Maintenance Practices",
+        organization: "Agile Alliance",
+        url: "https://www.agilealliance.org/resources/",
+        description: "How agile methodologies can be applied to software maintenance activities."
       }
     ]
   };
@@ -202,7 +202,7 @@ const GardenStories = () => {
           <div className="mb-12">
             <h2 className="text-garden-earth text-center">Gardening Resources</h2>
             <p className="text-center text-lg text-gray-600 max-w-3xl mx-auto">
-              Explore these valuable resources to learn more about software maintenance costs and processes,
+              Explore these valuable resources to learn more about software maintenance processes,
               helping you grow your knowledge and tend to your digital garden more effectively.
             </p>
           </div>
