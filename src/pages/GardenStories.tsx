@@ -1,6 +1,9 @@
 
 import React from "react";
 import GardenStory from "@/components/GardenStory";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ExternalLink, BookOpen, Youtube } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const GardenStories = () => {
   const stories = [
@@ -54,6 +57,105 @@ const GardenStories = () => {
     },
   ];
 
+  const resources = {
+    articles: [
+      {
+        title: "The True Cost of Software Maintenance",
+        source: "IEEE Software",
+        url: "https://ieeexplore.ieee.org/document/1146943",
+        description: "Detailed analysis of software maintenance costs and how they typically exceed development costs."
+      },
+      {
+        title: "Understanding Software Maintenance Models",
+        source: "ACM Digital Library",
+        url: "https://dl.acm.org/doi/10.1145/1142031.1142033",
+        description: "Academic research on various maintenance models and their effectiveness in different scenarios."
+      },
+      {
+        title: "The Economics of Software Maintenance",
+        source: "Journal of Software Maintenance",
+        url: "https://onlinelibrary.wiley.com/journal/1096908x",
+        description: "Comprehensive study on the economic factors affecting software maintenance decisions."
+      },
+      {
+        title: "Technical Debt and Its Impact on Maintenance Costs",
+        source: "Martin Fowler's Blog",
+        url: "https://martinfowler.com/bliki/TechnicalDebt.html",
+        description: "How technical debt accumulates and exponentially increases maintenance costs over time."
+      },
+      {
+        title: "Refactoring: Improving the Design of Existing Code",
+        source: "Martin Fowler",
+        url: "https://refactoring.com/",
+        description: "Essential resource on refactoring practices that reduce maintenance costs."
+      }
+    ],
+    videos: [
+      {
+        title: "Software Maintenance Explained in 10 Minutes",
+        platform: "YouTube",
+        url: "https://www.youtube.com/watch?v=AbgsfeGvg3E",
+        description: "Quick overview of software maintenance types and their importance."
+      },
+      {
+        title: "The Hidden Costs of Software",
+        platform: "YouTube",
+        url: "https://www.youtube.com/watch?v=G4PRwAHUKNI",
+        description: "Why maintenance often costs 4-5 times more than initial development."
+      },
+      {
+        title: "Reducing Technical Debt Through Continuous Refactoring",
+        platform: "YouTube",
+        url: "https://www.youtube.com/watch?v=1-Xoy5w5ydM",
+        description: "Practical approaches to reduce maintenance costs through ongoing code improvements."
+      },
+      {
+        title: "Legacy Code Maintenance Strategies",
+        platform: "YouTube",
+        url: "https://www.youtube.com/watch?v=5dCUJqhS4QQ",
+        description: "How to efficiently maintain and gradually modernize legacy systems."
+      },
+      {
+        title: "Software Maintenance Best Practices",
+        platform: "YouTube",
+        url: "https://www.youtube.com/watch?v=xvPuKfPE_Yg",
+        description: "Industry best practices that optimize maintenance processes and reduce costs."
+      }
+    ],
+    websites: [
+      {
+        title: "Software Maintenance Guide",
+        organization: "CISQ",
+        url: "https://www.it-cisq.org/software-quality-resources",
+        description: "Comprehensive resources on measuring and improving software maintenance."
+      },
+      {
+        title: "ISO/IEC 14764:2006 - Software Maintenance",
+        organization: "ISO",
+        url: "https://www.iso.org/standard/39064.html",
+        description: "International standard providing a framework for software maintenance processes."
+      },
+      {
+        title: "Software Maintenance Cost Estimator",
+        organization: "COCOMO II",
+        url: "http://csse.usc.edu/tools/COCOMOII.php",
+        description: "Tool for estimating software maintenance costs based on various factors."
+      },
+      {
+        title: "Maintenance Cost Reduction Strategies",
+        organization: "NIST",
+        url: "https://www.nist.gov/",
+        description: "Government resources on reducing software maintenance costs through standardization."
+      },
+      {
+        title: "Software Sustainability Institute",
+        organization: "SSI",
+        url: "https://www.software.ac.uk/",
+        description: "Research and resources dedicated to improving software sustainability and reducing long-term maintenance costs."
+      }
+    ]
+  };
+
   return (
     <>
       {/* Hero Section */}
@@ -91,6 +193,99 @@ const GardenStories = () => {
               />
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Resources Section */}
+      <section className="garden-section bg-garden-sand bg-opacity-30">
+        <div className="garden-container">
+          <div className="mb-12">
+            <h2 className="text-garden-earth text-center">Gardening Resources</h2>
+            <p className="text-center text-lg text-gray-600 max-w-3xl mx-auto">
+              Explore these valuable resources to learn more about software maintenance costs and processes,
+              helping you grow your knowledge and tend to your digital garden more effectively.
+            </p>
+          </div>
+
+          <Tabs defaultValue="articles" className="max-w-5xl mx-auto">
+            <TabsList className="grid w-full grid-cols-3 mb-8">
+              <TabsTrigger value="articles" className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                Articles
+              </TabsTrigger>
+              <TabsTrigger value="videos" className="flex items-center gap-2">
+                <Youtube className="h-4 w-4" />
+                Videos
+              </TabsTrigger>
+              <TabsTrigger value="websites" className="flex items-center gap-2">
+                <ExternalLink className="h-4 w-4" />
+                Websites
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="articles" className="space-y-6">
+              {resources.articles.map((article, index) => (
+                <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-garden-green-light">
+                  <h3 className="text-lg font-serif font-bold text-garden-green-dark mb-2">
+                    {article.title}
+                  </h3>
+                  <p className="text-sm text-garden-earth mb-3">Source: {article.source}</p>
+                  <p className="text-gray-600 mb-4">{article.description}</p>
+                  <a 
+                    href={article.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-garden-green-dark font-medium hover:text-garden-green-mid transition-colors group"
+                  >
+                    Read Article
+                    <ExternalLink className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </a>
+                </div>
+              ))}
+            </TabsContent>
+            
+            <TabsContent value="videos" className="space-y-6">
+              {resources.videos.map((video, index) => (
+                <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-garden-green-light">
+                  <h3 className="text-lg font-serif font-bold text-garden-green-dark mb-2">
+                    {video.title}
+                  </h3>
+                  <p className="text-sm text-garden-earth mb-3">Platform: {video.platform}</p>
+                  <p className="text-gray-600 mb-4">{video.description}</p>
+                  <a 
+                    href={video.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-garden-green-dark font-medium hover:text-garden-green-mid transition-colors group"
+                  >
+                    Watch Video
+                    <Youtube className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </a>
+                </div>
+              ))}
+            </TabsContent>
+            
+            <TabsContent value="websites" className="space-y-6">
+              {resources.websites.map((website, index) => (
+                <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-garden-green-light">
+                  <h3 className="text-lg font-serif font-bold text-garden-green-dark mb-2">
+                    {website.title}
+                  </h3>
+                  <p className="text-sm text-garden-earth mb-3">Organization: {website.organization}</p>
+                  <p className="text-gray-600 mb-4">{website.description}</p>
+                  <a 
+                    href={website.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-garden-green-dark font-medium hover:text-garden-green-mid transition-colors group"
+                  >
+                    Visit Website
+                    <ExternalLink className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </a>
+                </div>
+              ))}
+            </TabsContent>
+          </Tabs>
         </div>
       </section>
 
