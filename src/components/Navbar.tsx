@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -17,6 +16,7 @@ const Navbar = () => {
     { name: "Garden Process", path: "/garden-process" },
     { name: "Garden Stories", path: "/garden-stories" },
     { name: "Ask The Gardener", path: "/ask-the-gardener" },
+    { name: "Quiz", path: "/quiz" }
   ];
 
   return (
