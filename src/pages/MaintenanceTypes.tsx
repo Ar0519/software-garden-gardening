@@ -1,9 +1,230 @@
 
 import React from "react";
-import MaintenanceHero from "../components/maintenance/MaintenanceHero";
-import MaintenanceTypeCard from "../components/maintenance/MaintenanceTypeCard";
-import MaintenanceTypeDetail from "../components/maintenance/MaintenanceTypeDetail";
-import { maintenanceTypes } from "../data/maintenanceTypes";
+import { 
+  CheckCircle, 
+  Sprout, 
+  Flower, 
+  Shield, 
+  Bug, 
+  FileCode, 
+  AlertTriangle, 
+  Scissors, 
+  CloudRain,
+  Shovel,
+  Palette,
+  Zap,
+  Lock,
+  Scale
+} from "lucide-react";
+
+const maintenanceTypes = [
+  {
+    id: "corrective",
+    title: "Corrective Maintenance",
+    description: "Fixing bugs and errors in existing software to ensure it functions as intended.",
+    icon: <CheckCircle size={28} />,
+    color: "red-500",
+    gardenAnalogy: "Weeding and removing pests",
+    activities: [
+      {
+        title: "Bug Fixing",
+        description: "Identifying and resolving errors in code.",
+        icon: <Bug size={24} />,
+        gardenParallel: "Removing harmful insects that damage plants."
+      },
+      {
+        title: "Emergency Repairs",
+        description: "Addressing critical failures that cause system downtime.",
+        icon: <AlertTriangle size={24} />,
+        gardenParallel: "Dealing with sudden plant diseases or infestations."
+      },
+      {
+        title: "Code Cleanup",
+        description: "Removing obsolete or redundant code that causes problems.",
+        icon: <Scissors size={24} />,
+        gardenParallel: "Pruning dead branches to improve plant health."
+      }
+    ]
+  },
+  {
+    id: "adaptive",
+    title: "Adaptive Maintenance",
+    description: "Modifying software to function properly in a changing environment.",
+    icon: <Sprout size={28} />,
+    color: "blue-500",
+    gardenAnalogy: "Changing soil composition for new climate conditions",
+    activities: [
+      {
+        title: "Platform Updates",
+        description: "Updating software to work with new operating systems or devices.",
+        icon: <CloudRain size={24} />,
+        gardenParallel: "Adapting watering schedules based on changing seasons."
+      },
+      {
+        title: "API Changes",
+        description: "Modifying code to work with updated external services.",
+        icon: <FileCode size={24} />,
+        gardenParallel: "Adjusting soil nutrients as neighboring plants change."
+      },
+      {
+        title: "Technology Migrations",
+        description: "Moving to new frameworks or languages as technologies evolve.",
+        icon: <Shovel size={24} />,
+        gardenParallel: "Transplanting plants to new areas as garden conditions change."
+      }
+    ]
+  },
+  {
+    id: "perfective",
+    title: "Perfective Maintenance",
+    description: "Enhancing features and improving performance based on user needs.",
+    icon: <Flower size={28} />,
+    color: "purple-500",
+    gardenAnalogy: "Adding flowers and features to improve garden beauty",
+    activities: [
+      {
+        title: "UI Improvements",
+        description: "Enhancing the user interface for better experience.",
+        icon: <Palette size={24} />,
+        gardenParallel: "Arranging flowers for better aesthetic appeal."
+      },
+      {
+        title: "Performance Optimization",
+        description: "Making software run faster and use fewer resources.",
+        icon: <Zap size={24} />,
+        gardenParallel: "Optimizing plant spacing for better growth and resource use."
+      },
+      {
+        title: "New Features",
+        description: "Adding capabilities based on user feedback and needs.",
+        icon: <Flower size={24} />,
+        gardenParallel: "Adding new plant varieties to enhance garden diversity."
+      }
+    ]
+  },
+  {
+    id: "preventive",
+    title: "Preventive Maintenance",
+    description: "Making changes to prevent future problems before they occur.",
+    icon: <Shield size={28} />,
+    color: "green-500",
+    gardenAnalogy: "Building fences and adding mulch to protect the garden",
+    activities: [
+      {
+        title: "Code Refactoring",
+        description: "Restructuring code for better maintainability without changing functionality.",
+        icon: <FileCode size={24} />,
+        gardenParallel: "Rearranging garden beds to prevent future overcrowding."
+      },
+      {
+        title: "Security Updates",
+        description: "Strengthening software against potential vulnerabilities.",
+        icon: <Lock size={24} />,
+        gardenParallel: "Installing fences to protect against future garden threats."
+      },
+      {
+        title: "Technical Debt Reduction",
+        description: "Addressing shortcuts taken during development that could cause future issues.",
+        icon: <Scale size={24} />,
+        gardenParallel: "Balancing soil pH to prevent long-term nutrient problems."
+      }
+    ]
+  }
+];
+
+const MaintenanceHero = () => {
+  return (
+    <section className="bg-garden-green-mid text-white py-16">
+      <div className="garden-container">
+        <h1 className="text-center">Types of Software Maintenance</h1>
+        <p className="text-xl text-center max-w-3xl mx-auto">
+          Just as gardens require different types of care throughout the seasons, 
+          software needs various forms of maintenance to stay healthy and functional.
+        </p>
+      </div>
+    </section>
+  );
+};
+
+const MaintenanceTypeCard = ({
+  id,
+  title,
+  description,
+  icon,
+  color,
+  gardenAnalogy,
+}) => {
+  return (
+    <a 
+      href={`#${id}`}
+      className={`p-6 rounded-lg text-black bg-gradient-to-r hover:shadow-lg transition-all duration-300 from-${color} to-${color}/70`}
+    >
+      <div className="flex items-center mb-4">
+        <div className="mr-3 bg-white/20 p-2 rounded-full">{icon}</div>
+        <h3 className="text-xl font-bold">{title}</h3>
+      </div>
+      <p className="mb-3 text-gray-800">{description}</p>
+      <div className="text-sm font-medium text-gray-700">
+        <span className="font-bold">Garden Parallel:</span> {gardenAnalogy}
+      </div>
+    </a>
+  );
+};
+
+const MaintenanceActivities = ({ activities, color }) => {
+  return (
+    <div className="mt-8">
+      <h3 className="text-xl font-bold mb-6">Key Activities:</h3>
+      <div className="grid md:grid-cols-3 gap-6 pl-6">
+        {activities.map((activity, index) => (
+          <div 
+            key={index}
+            className="garden-card h-full"
+          >
+            <div className="flex items-center mb-3">
+              <div className={`text-${color} mr-3`}>{activity.icon}</div>
+              <h4 className="text-lg font-bold">{activity.title}</h4>
+            </div>
+            <p className="text-gray-600 mb-4">{activity.description}</p>
+            <div className="mt-auto pt-3 border-t border-gray-100">
+              <p className="text-sm italic">
+                <span className="font-medium text-garden-green-dark">Garden Parallel:</span> {activity.gardenParallel}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const MaintenanceTypeDetail = ({
+  id,
+  title,
+  description,
+  icon,
+  color,
+  gardenAnalogy,
+  activities,
+}) => {
+  return (
+    <div id={id} className="mb-20 scroll-mt-20">
+      <div className={`border-l-4 border-${color} pl-6`}>
+        <div className="flex items-center">
+          <div className={`text-${color} mr-3`}>{icon}</div>
+          <h2 className="text-3xl font-bold">{title}</h2>
+        </div>
+        <p className="text-lg my-4">{description}</p>
+        <div className="bg-garden-green-light bg-opacity-10 p-6 rounded-md my-6">
+          <p className="text-lg italic">
+            <span className="font-bold text-garden-green-dark">Garden Analogy:</span> {gardenAnalogy}
+          </p>
+        </div>
+      </div>
+      <MaintenanceActivities activities={activities} color={color} />
+    </div>
+  );
+};
 
 const MaintenanceTypes = () => {
   return (
