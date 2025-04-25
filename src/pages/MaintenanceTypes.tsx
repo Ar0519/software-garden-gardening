@@ -161,14 +161,14 @@ const MaintenanceTypes = () => {
                 <a 
                   key={type.id} 
                   href={`#${type.id}`}
-                  className={`p-6 rounded-lg text-white bg-gradient-to-r hover:shadow-lg transition-all duration-300 from-${type.color} to-${type.color}/70`}
+                  className={`p-6 rounded-lg text-black bg-gradient-to-r hover:shadow-lg transition-all duration-300 from-${type.color} to-${type.color}/70`}
                 >
                   <div className="flex items-center mb-4">
                     <div className="mr-3 bg-white/20 p-2 rounded-full">{type.icon}</div>
                     <h3 className="text-xl font-bold">{type.title}</h3>
                   </div>
-                  <p className="mb-3 text-white/90">{type.description}</p>
-                  <div className="text-sm font-medium">
+                  <p className="mb-3 text-gray-800">{type.description}</p>
+                  <div className="text-sm font-medium text-gray-700">
                     <span className="font-bold">Garden Parallel:</span> {type.gardenAnalogy}
                   </div>
                 </a>
@@ -227,3 +227,4 @@ const MaintenanceTypes = () => {
 };
 
 export default MaintenanceTypes;
+
