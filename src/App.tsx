@@ -12,6 +12,7 @@ import GardenStories from "./pages/GardenStories";
 import AskTheGardener from "./pages/AskTheGardener";
 import NotFound from "./pages/NotFound";
 import Quiz from "./pages/Quiz";
+import TechDebtGame from "./pages/TechDebtGame";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
               <Route path="/garden-stories" element={<GardenStories />} />
               <Route path="/ask-the-gardener" element={<AskTheGardener />} />
               <Route path="/quiz" element={<Quiz />} />
+              <Route path="/tech-debt-game" element={<TechDebtGame />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
