@@ -1,11 +1,12 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Menu, X, Leaf } from "lucide-react";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -21,6 +22,9 @@ const Navbar = () => {
     { name: "Tech Debt Game", path: "/tech-debt-game" }
   ];
 
+  // Check if a link is active
+  const isActive = (path: string) => location.pathname === path;
+
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-50">
       <div className="garden-container">
@@ -31,12 +35,17 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
             {links.map((link) => (
               <Link
                 key={link.name}
                 to={link.path}
-                className="text-garden-green-dark hover:text-garden-green-mid transition-colors font-medium"
+                className={cn(
+                  "transition-colors font-medium",
+                  isActive(link.path) 
+                    ? "text-garden-green-dark font-bold" 
+                    : "text-gray-600 hover:text-garden-green-mid"
+                )}
               >
                 {link.name}
               </Link>
@@ -46,8 +55,9 @@ const Navbar = () => {
           {/* Mobile menu button */}
           <button
             onClick={toggleMenu}
-            className="md:hidden text-garden-green-dark"
+            className="md:hidden text-garden-green-dark p-1 rounded-md hover:bg-garden-sand hover:bg-opacity-20 transition-colors"
             aria-label="Toggle menu"
+            aria-expanded={isMenuOpen}
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -58,7 +68,7 @@ const Navbar = () => {
       <div
         className={cn(
           "md:hidden overflow-hidden transition-all duration-300 ease-in-out",
-          isMenuOpen ? "max-h-64" : "max-h-0"
+          isMenuOpen ? "max-h-96" : "max-h-0"
         )}
       >
         <div className="garden-container pb-4">
@@ -67,7 +77,12 @@ const Navbar = () => {
               <Link
                 key={link.name}
                 to={link.path}
-                className="text-garden-green-dark hover:text-garden-green-mid transition-colors px-2 py-1 rounded"
+                className={cn(
+                  "px-2 py-1.5 rounded-md transition-colors",
+                  isActive(link.path) 
+                    ? "bg-garden-green-light bg-opacity-20 text-garden-green-dark font-medium" 
+                    : "text-gray-600 hover:bg-garden-sand hover:bg-opacity-20 hover:text-garden-green-dark"
+                )}
                 onClick={() => setIsMenuOpen(false)}
               >
                 {link.name}
