@@ -1,602 +1,603 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { 
   Bomb, 
   Wrench, 
-  CodeIcon, 
+  Code, 
   Bug, 
-  TrendingUp, 
   Shield, 
   Layers, 
-  Users, 
-  Timer, 
-  Circle
+  Timer,
+  CircleCheck,
+  Clock,
+  ArrowUp,
+  ArrowDown,
+  ArrowRight,
+  Settings,
+  FileCode,
+  CircleX,
+  Users
 } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 
-// Types for our game
-type Player = {
+// Define game data types
+type Feature = {
   id: string;
   name: string;
-  color: string;
-  resources: number;
-  features: number;
-  score: number;
-  isReady: boolean;
-  isTurn: boolean;
+  complexity: number; // 1-10
+  techDebtCost: number;
+  implemented: boolean;
+  bugsGenerated: number;
+  icon: React.ReactNode;
+};
+
+type Sprint = {
+  number: number;
+  techDebtAccumulated: number;
+  featuresCompleted: number;
+  bugsIntroduced: number;
+  bugsFixed: number;
+  techDebtReduced: number;
+  velocity: number; // Development velocity (affected by tech debt)
 };
 
 type GameState = {
+  companyName: string;
+  day: number;
+  sprint: number;
   techDebt: number;
   bugs: number;
-  timeRemaining: number;
-  round: number;
-  status: 'waiting' | 'playing' | 'gameOver';
-  currentPlayerIndex: number;
+  resources: number; // Developer hours available
+  velocity: number; // How fast you can implement features (affected by tech debt)
+  features: Feature[];
+  sprints: Sprint[];
+  customerSatisfaction: number; // 0-100
+  projectHealth: number; // 0-100
+  status: 'intro' | 'playing' | 'gameOver';
   message: string;
+  gameOverReason?: string;
 };
 
-// Available player colors
-const PLAYER_COLORS = [
-  "#9b87f5", "#F97316", "#0EA5E9", "#D946EF", 
-  "#22c55e", "#f43f5e", "#8b5cf6", "#f59e0b", 
-  "#10b981", "#6366f1"
+// Sample feature list
+const AVAILABLE_FEATURES: Feature[] = [
+  {
+    id: 'f1',
+    name: 'User Authentication',
+    complexity: 5,
+    techDebtCost: 10,
+    implemented: false,
+    bugsGenerated: 2,
+    icon: <Shield className="text-blue-500" />
+  },
+  {
+    id: 'f2',
+    name: 'Dashboard UI',
+    complexity: 3,
+    techDebtCost: 8,
+    implemented: false,
+    bugsGenerated: 1,
+    icon: <Layers className="text-indigo-500" />
+  },
+  {
+    id: 'f3',
+    name: 'Data Export',
+    complexity: 4,
+    techDebtCost: 12,
+    implemented: false, 
+    bugsGenerated: 3,
+    icon: <FileCode className="text-green-500" />
+  },
+  {
+    id: 'f4',
+    name: 'Search Functionality',
+    complexity: 6,
+    techDebtCost: 15,
+    implemented: false,
+    bugsGenerated: 2,
+    icon: <Settings className="text-amber-500" />
+  },
+  {
+    id: 'f5',
+    name: 'Notification System',
+    complexity: 7,
+    techDebtCost: 18,
+    implemented: false,
+    bugsGenerated: 4,
+    icon: <CircleCheck className="text-purple-500" />
+  }
 ];
+
+// Scenarios that randomly occur
+const SCENARIOS = [
+  {
+    title: "New Framework Released",
+    description: "A new framework has been released that could improve development speed, but requires refactoring.",
+    options: [
+      { 
+        text: "Adopt new framework", 
+        effect: { resources: -20, techDebt: -15, velocity: 15 } 
+      },
+      { 
+        text: "Stick with current tech", 
+        effect: { techDebt: 5 } 
+      }
+    ]
+  },
+  {
+    title: "Customer Urgent Request",
+    description: "A key customer needs an urgent feature modification. You can rush it or take time to do it properly.",
+    options: [
+      { 
+        text: "Rush implementation", 
+        effect: { customerSatisfaction: 10, techDebt: 15, bugs: 3 } 
+      },
+      { 
+        text: "Take time to do it right", 
+        effect: { customerSatisfaction: 5, resources: -10 } 
+      }
+    ]
+  },
+  {
+    title: "Code Review Decision",
+    description: "Your team is discussing whether to implement strict code review policies.",
+    options: [
+      { 
+        text: "Implement strict reviews", 
+        effect: { velocity: -5, techDebt: -10, bugs: -2 } 
+      },
+      { 
+        text: "Keep current process", 
+        effect: { velocity: 5, techDebt: 5, bugs: 1 } 
+      }
+    ]
+  }
+];
+
+// Initial game state
+const initialState: GameState = {
+  companyName: 'TechCraft Solutions',
+  day: 1,
+  sprint: 1,
+  techDebt: 0,
+  bugs: 0,
+  resources: 40,
+  velocity: 100,
+  features: [...AVAILABLE_FEATURES],
+  sprints: [],
+  customerSatisfaction: 80,
+  projectHealth: 100,
+  status: 'intro',
+  message: "Welcome to Tech Debt Simulator! You're in charge of a software project."
+};
 
 const TechDebtGame = () => {
   const { toast } = useToast();
-  const [playerName, setPlayerName] = useState("");
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [localPlayerId, setLocalPlayerId] = useState<string | null>(null);
-  const [gameState, setGameState] = useState<GameState>({
-    techDebt: 0,
-    bugs: 0,
-    timeRemaining: 300, // 5 minutes
-    round: 1,
-    status: 'waiting',
-    currentPlayerIndex: 0,
-    message: "Waiting for players to join...",
-  });
-  const [isJoining, setIsJoining] = useState(false);
+  const [gameState, setGameState] = useState<GameState>(initialState);
+  const [showScenario, setShowScenario] = useState(false);
+  const [currentScenario, setCurrentScenario] = useState<any>(null);
+  const [qualityFocus, setQualityFocus] = useState<number>(50); // Quality vs Speed slider (0-100)
+  const [showTutorial, setShowTutorial] = useState(true);
 
-  // Check if current player has their turn
-  const isCurrentPlayerTurn = () => {
-    if (!localPlayerId) return false;
-    const localPlayer = players.find(p => p.id === localPlayerId);
-    return localPlayer?.isTurn || false;
-  };
-
-  // Get current player
-  const getCurrentPlayer = () => {
-    return players.find(p => p.id === localPlayerId);
-  };
-
-  // Join game
-  const handleJoinGame = () => {
-    if (!playerName.trim()) {
-      toast({
-        title: "Name Required",
-        description: "Please enter your name to join the game",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (players.length >= 10) {
-      toast({
-        title: "Game Full",
-        description: "This game already has the maximum of 10 players",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsJoining(true);
-
-    // In a real implementation, this would call an API
-    // For now, we'll simulate adding the player locally
-    setTimeout(() => {
-      const newPlayerId = `player-${Date.now()}`;
-      const colorIndex = players.length % PLAYER_COLORS.length;
-      
-      const newPlayer: Player = {
-        id: newPlayerId,
-        name: playerName,
-        color: PLAYER_COLORS[colorIndex],
-        resources: 100,
-        features: 0,
-        score: 0,
-        isReady: false,
-        isTurn: players.length === 0, // First player gets first turn
-      };
-
-      setPlayers(prev => [...prev, newPlayer]);
-      setLocalPlayerId(newPlayerId);
-      setIsJoining(false);
-
-      toast({
-        title: "Joined Game!",
-        description: `Welcome to the Technical Debt Challenge, ${playerName}!`,
-      });
-    }, 1000);
-  };
-
-  // Mark player as ready
-  const handleReady = () => {
-    setPlayers(prev => 
-      prev.map(p => 
-        p.id === localPlayerId 
-          ? { ...p, isReady: true } 
-          : p
-      )
-    );
-
-    // Check if all players are ready
-    const updatedPlayers = players.map(p => 
-      p.id === localPlayerId ? { ...p, isReady: true } : p
-    );
-    
-    if (updatedPlayers.length >= 2 && updatedPlayers.every(p => p.isReady)) {
-      startGame();
-    } else {
-      toast({
-        title: "Ready!",
-        description: "Waiting for other players to get ready...",
-      });
-    }
+  // Calculate tech debt impact on development
+  const calculateVelocityImpact = () => {
+    // As tech debt increases, velocity decreases
+    const impact = 100 - (gameState.techDebt * 0.8);
+    return Math.max(20, impact); // Minimum 20% velocity
   };
 
   // Start game
   const startGame = () => {
-    setGameState(prev => ({
-      ...prev,
+    setGameState({
+      ...initialState,
       status: 'playing',
-      message: `Round 1: ${players[0].name}'s turn`,
-    }));
-    
+      message: "Day 1: Let's start building our software project!",
+    });
+    setShowTutorial(false);
     toast({
-      title: "Game Started!",
-      description: "Work together to manage technical debt!",
+      title: "Project Started!",
+      description: "Make wise decisions to balance speed and quality!",
     });
   };
 
-  // End turn and move to next player
-  const endTurn = () => {
-    if (gameState.status !== 'playing') return;
+  // Implement a feature
+  const implementFeature = (featureId: string) => {
+    const feature = gameState.features.find(f => f.id === featureId);
+    if (!feature) return;
     
-    // Find next player index
-    const nextPlayerIndex = (gameState.currentPlayerIndex + 1) % players.length;
+    // Calculate cost based on complexity and tech debt
+    const resourceCost = feature.complexity * (1 + gameState.techDebt / 100);
     
-    // Update game state and players
-    setGameState(prev => ({
-      ...prev,
-      currentPlayerIndex: nextPlayerIndex,
-      message: `${players[nextPlayerIndex].name}'s turn`,
-      techDebt: Math.min(100, prev.techDebt + 2) // Tech debt increases slightly each turn
-    }));
+    if (gameState.resources < resourceCost) {
+      toast({
+        title: "Insufficient Resources",
+        description: "Your team doesn't have enough developer hours.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    setPlayers(prev => 
-      prev.map((p, i) => ({
-        ...p,
-        isTurn: i === nextPlayerIndex
-      }))
-    );
+    // Calculate tech debt increase - affected by quality focus
+    const qualityFactor = qualityFocus / 100; // 0 to 1
+    const techDebtIncrease = feature.techDebtCost * (1 - qualityFactor) * 1.5;
+    const bugsGenerated = Math.floor(feature.bugsGenerated * (1 - qualityFactor) * 1.2);
     
-    // Update round if we've gone through all players
-    if (nextPlayerIndex === 0) {
-      setGameState(prev => ({
-        ...prev,
-        round: prev.round + 1,
-        message: `Round ${prev.round + 1}: ${players[0].name}'s turn`,
-      }));
+    // Update game state
+    setGameState(prev => {
+      const updatedFeatures = prev.features.map(f => 
+        f.id === featureId ? { ...f, implemented: true } : f
+      );
       
-      // Spawn bugs based on tech debt
-      const newBugs = Math.floor(gameState.techDebt / 20); // Higher tech debt = more bugs
-      if (newBugs > 0) {
-        setGameState(prev => ({
-          ...prev,
-          bugs: prev.bugs + newBugs
-        }));
-        
-        toast({
-          title: `${newBugs} New Bug${newBugs > 1 ? 's' : ''} Appeared!`,
-          description: "High technical debt is creating problems!",
-          variant: "destructive",
-        });
-      }
-    }
+      const newTechDebt = Math.min(100, prev.techDebt + techDebtIncrease);
+      
+      return {
+        ...prev,
+        resources: prev.resources - resourceCost,
+        techDebt: newTechDebt,
+        bugs: prev.bugs + bugsGenerated,
+        features: updatedFeatures,
+        customerSatisfaction: Math.min(100, prev.customerSatisfaction + 5),
+        velocity: calculateVelocityImpact(),
+        message: `Implemented ${feature.name}! ${bugsGenerated > 0 ? `Generated ${bugsGenerated} new bugs.` : ''}`,
+      };
+    });
     
     toast({
-      title: "Turn Ended",
-      description: `Now it's ${players[nextPlayerIndex].name}'s turn!`,
+      title: `${feature.name} Implemented! 🚀`,
+      description: `${bugsGenerated > 0 ? `Generated ${bugsGenerated} bugs. Technical debt increased.` : 'Feature added successfully!'}`,
     });
-  };
-
-  // Ship a new feature (increases tech debt but adds score)
-  const shipFeature = () => {
-    if (!isCurrentPlayerTurn()) return;
     
-    const player = getCurrentPlayer();
-    if (!player) return;
-    
-    if (player.resources < 20) {
-      toast({
-        title: "Insufficient Resources",
-        description: "You need 20 dev hours to ship a feature",
-        variant: "destructive",
-      });
+    // Check game over conditions
+    if (gameState.techDebt + techDebtIncrease >= 100) {
+      endGame("Project collapsed under technical debt!");
       return;
     }
     
-    // Update player stats
-    setPlayers(prev => 
-      prev.map(p => 
-        p.id === localPlayerId 
-          ? { 
-              ...p, 
-              resources: p.resources - 20,
-              features: p.features + 1,
-              score: p.score + 100
-            } 
-          : p
-      )
-    );
-    
-    // Update game state
-    setGameState(prev => ({
-      ...prev,
-      techDebt: Math.min(100, prev.techDebt + 15)
-    }));
-    
-    toast({
-      title: "Feature Shipped! 🚀",
-      description: `${player.name} shipped a new feature but increased technical debt`,
-    });
-    
-    // Check for tech debt explosion
-    if (gameState.techDebt + 15 >= 100) {
-      handleGameOver("technical debt");
-      return;
+    // Random chance of scenario
+    if (Math.random() < 0.3) {
+      triggerRandomScenario();
     }
     
-    endTurn();
+    // Advance time
+    advanceTime();
   };
 
-  // Refactor code (reduces tech debt but costs resources)
+  // Reduce tech debt (refactoring)
   const refactorCode = () => {
-    if (!isCurrentPlayerTurn()) return;
+    const refactoringCost = 15 + (gameState.techDebt * 0.2);
     
-    const player = getCurrentPlayer();
-    if (!player) return;
-    
-    if (player.resources < 30) {
+    if (gameState.resources < refactoringCost) {
       toast({
         title: "Insufficient Resources",
-        description: "You need 30 dev hours to refactor code",
+        description: "Your team doesn't have enough developer hours to refactor.",
         variant: "destructive",
       });
       return;
     }
     
-    // Update player stats
-    setPlayers(prev => 
-      prev.map(p => 
-        p.id === localPlayerId 
-          ? { 
-              ...p, 
-              resources: p.resources - 30,
-              score: p.score + 50
-            } 
-          : p
-      )
-    );
+    // Calculate refactoring effectiveness based on current tech debt
+    const debtReduction = Math.min(gameState.techDebt, 10 + (gameState.techDebt * 0.15));
     
-    // Update game state
     setGameState(prev => ({
       ...prev,
-      techDebt: Math.max(0, prev.techDebt - 25),
-      bugs: Math.max(0, prev.bugs - 2) // Refactoring fixes some bugs
+      resources: prev.resources - refactoringCost,
+      techDebt: Math.max(0, prev.techDebt - debtReduction),
+      velocity: calculateVelocityImpact(),
+      projectHealth: Math.min(100, prev.projectHealth + 5),
+      message: `Performed code refactoring! Reduced technical debt by ${debtReduction.toFixed(1)} points.`,
     }));
     
     toast({
       title: "Code Refactored! ✨",
-      description: `${player.name} improved the codebase quality`,
+      description: `Reduced technical debt by ${debtReduction.toFixed(1)} points. Development velocity improved.`,
     });
     
-    endTurn();
+    advanceTime();
   };
 
-  // Fix bugs (reduces bugs but costs resources)
+  // Fix bugs
   const fixBugs = () => {
-    if (!isCurrentPlayerTurn()) return;
+    if (gameState.bugs === 0) {
+      toast({
+        title: "No Bugs to Fix",
+        description: "Your codebase is currently bug-free! Great job!",
+      });
+      return;
+    }
     
-    const player = getCurrentPlayer();
-    if (!player) return;
+    const bugFixCost = Math.min(gameState.resources, 5 * Math.min(gameState.bugs, 3));
+    const bugsToFix = Math.min(gameState.bugs, Math.floor(bugFixCost / 5) + 1);
     
-    if (player.resources < 15) {
+    if (gameState.resources < 5) {
       toast({
         title: "Insufficient Resources",
-        description: "You need 15 dev hours to fix bugs",
+        description: "Your team needs at least 5 developer hours to fix bugs.",
         variant: "destructive",
       });
       return;
     }
     
-    if (gameState.bugs === 0) {
-      toast({
-        title: "No Bugs to Fix",
-        description: "The codebase is currently bug-free!",
-      });
-      return;
-    }
-    
-    // Update player stats
-    setPlayers(prev => 
-      prev.map(p => 
-        p.id === localPlayerId 
-          ? { 
-              ...p, 
-              resources: p.resources - 15,
-              score: p.score + 30
-            } 
-          : p
-      )
-    );
-    
-    // Update game state
     setGameState(prev => ({
       ...prev,
-      bugs: Math.max(0, prev.bugs - 3)
+      resources: prev.resources - bugFixCost,
+      bugs: prev.bugs - bugsToFix,
+      customerSatisfaction: Math.min(100, prev.customerSatisfaction + 3),
+      projectHealth: Math.min(100, prev.projectHealth + 3),
+      message: `Fixed ${bugsToFix} bug${bugsToFix > 1 ? 's' : ''}! Customers are happier.`,
     }));
     
     toast({
-      title: "Bugs Fixed! 🐛",
-      description: `${player.name} squashed some bugs`,
+      title: `${bugsToFix} Bug${bugsToFix > 1 ? 's' : ''} Fixed! 🐛`,
+      description: "Your software is more stable now. Customer satisfaction improved.",
     });
     
-    endTurn();
+    advanceTime();
   };
 
-  // Rest (gain more resources)
-  const takeRest = () => {
-    if (!isCurrentPlayerTurn()) return;
-    
-    const player = getCurrentPlayer();
-    if (!player) return;
-    
-    // Update player stats
-    setPlayers(prev => 
-      prev.map(p => 
-        p.id === localPlayerId 
-          ? { ...p, resources: p.resources + 40 } 
-          : p
-      )
-    );
+  // Add more resources (developers)
+  const addResources = () => {
+    setGameState(prev => ({
+      ...prev,
+      resources: prev.resources + 30,
+      message: "Added more developer capacity to the team!",
+    }));
     
     toast({
-      title: "Team Rested! 😴",
-      description: `${player.name}'s team recovered some dev hours`,
+      title: "Team Expanded! 👩‍💻👨‍💻",
+      description: "Added 30 more developer hours to your team.",
     });
     
-    endTurn();
+    advanceTime();
   };
 
-  // Game Over
-  const handleGameOver = (reason: string) => {
+  // Handle scenario choice
+  const handleScenarioChoice = (effectIndex: number) => {
+    if (!currentScenario) return;
+    
+    const effect = currentScenario.options[effectIndex].effect;
+    
+    setGameState(prev => {
+      let newState = { ...prev };
+      
+      if (effect.resources) newState.resources = Math.max(0, prev.resources + effect.resources);
+      if (effect.techDebt) newState.techDebt = Math.min(100, Math.max(0, prev.techDebt + effect.techDebt));
+      if (effect.bugs) newState.bugs = Math.max(0, prev.bugs + effect.bugs);
+      if (effect.velocity) newState.velocity = Math.max(20, Math.min(100, prev.velocity + effect.velocity));
+      if (effect.customerSatisfaction) newState.customerSatisfaction = Math.min(100, Math.max(0, prev.customerSatisfaction + effect.customerSatisfaction));
+      
+      newState.message = `Decision made: ${currentScenario.options[effectIndex].text}`;
+      
+      return newState;
+    });
+    
+    setShowScenario(false);
+    advanceTime();
+  };
+
+  // Trigger random scenario
+  const triggerRandomScenario = () => {
+    const randomIndex = Math.floor(Math.random() * SCENARIOS.length);
+    setCurrentScenario(SCENARIOS[randomIndex]);
+    setShowScenario(true);
+  };
+
+  // Advance time (day)
+  const advanceTime = () => {
+    setGameState(prev => {
+      // New day
+      let newDay = prev.day + 1;
+      let newSprint = prev.sprint;
+      let message = `Day ${newDay}`;
+      let newSprints = [...prev.sprints];
+      
+      // End of sprint (every 10 days)
+      if (newDay % 10 === 1) {
+        newSprint++;
+        message = `Starting Sprint ${newSprint}!`;
+        
+        // Record sprint stats
+        const implementedFeatures = prev.features.filter(f => f.implemented).length;
+        const previousSprintFeatures = newSprints.length > 0 ? 
+          newSprints[newSprints.length - 1].featuresCompleted : 0;
+        
+        newSprints.push({
+          number: newSprint - 1, // Just completed sprint
+          techDebtAccumulated: prev.techDebt,
+          featuresCompleted: implementedFeatures - previousSprintFeatures,
+          bugsIntroduced: prev.bugs,
+          bugsFixed: 0, // We'd need to track this separately for accuracy
+          techDebtReduced: 0, // Same here
+          velocity: prev.velocity
+        });
+        
+        // Sprint effects
+        if (prev.techDebt > 50) {
+          message += " High technical debt is slowing down development.";
+        }
+      }
+      
+      // Daily effects from tech debt
+      let newTechDebt = prev.techDebt;
+      let newBugs = prev.bugs;
+      let projectHealthChange = 0;
+      
+      if (prev.techDebt > 70) {
+        // High tech debt can generate bugs on its own
+        const randomBugs = Math.floor(Math.random() * 3);
+        if (randomBugs > 0) {
+          newBugs += randomBugs;
+          message += ` ${randomBugs} new bug${randomBugs > 1 ? 's' : ''} appeared due to high technical debt!`;
+        }
+        projectHealthChange -= 2;
+      }
+      
+      if (prev.bugs > 10) {
+        projectHealthChange -= 3;
+        message += " Numerous bugs are affecting project health.";
+      }
+      
+      // Compounding tech debt (small amount daily)
+      if (prev.techDebt > 0) {
+        const compoundDebt = prev.techDebt * 0.02;
+        newTechDebt = Math.min(100, newTechDebt + compoundDebt);
+      }
+      
+      // Update project health
+      const newProjectHealth = Math.max(0, Math.min(100, prev.projectHealth + projectHealthChange));
+      
+      // Check game over conditions
+      if (newProjectHealth <= 0) {
+        endGame("Project health reached critical level!");
+        return prev;
+      }
+      
+      if (newTechDebt >= 100) {
+        endGame("Technical debt became unmanageable!");
+        return prev;
+      }
+      
+      // All features implemented - you win!
+      if (prev.features.every(f => f.implemented)) {
+        endGame("All features implemented successfully!", true);
+        return prev;
+      }
+      
+      return {
+        ...prev,
+        day: newDay,
+        sprint: newSprint,
+        sprints: newSprints,
+        techDebt: newTechDebt,
+        bugs: newBugs,
+        projectHealth: newProjectHealth,
+        message: message,
+        velocity: calculateVelocityImpact()
+      };
+    });
+  };
+
+  // End game (success or failure)
+  const endGame = (reason: string, success = false) => {
     setGameState(prev => ({
       ...prev,
       status: 'gameOver',
-      message: reason === "technical debt" 
-        ? "System collapsed under too much technical debt!" 
-        : "Time's up! Project deadline reached."
+      message: success ? "Project Completed Successfully!" : "Game Over!",
+      gameOverReason: reason
     }));
     
-    // Calculate final scores
-    const finalScores = players.map(p => ({
-      ...p,
-      // Penalize score for bugs and tech debt
-      score: p.score - (gameState.bugs * 10) - (gameState.techDebt * 5)
-    }));
-    
-    // Sort by score
-    const sortedPlayers = [...finalScores].sort((a, b) => b.score - a.score);
-    setPlayers(sortedPlayers);
-    
-    // Show results
     toast({
-      title: "Game Over!",
-      description: `${sortedPlayers[0].name} leads with ${sortedPlayers[0].score} points!`,
-      variant: "destructive",
+      title: success ? "Project Success! 🎉" : "Project Failed! 😢",
+      description: reason,
+      variant: success ? "default" : "destructive"
     });
   };
 
   // Restart game
   const restartGame = () => {
-    setGameState({
-      techDebt: 0,
-      bugs: 0,
-      timeRemaining: 300,
-      round: 1,
-      status: 'waiting',
-      currentPlayerIndex: 0,
-      message: "Waiting for players to join...",
-    });
-    
-    // Reset players but keep them in the game
-    setPlayers(prev => 
-      prev.map(p => ({
-        ...p,
-        resources: 100,
-        features: 0,
-        score: 0,
-        isReady: false,
-        isTurn: p.id === players[0]?.id // First player gets first turn
-      }))
-    );
-    
+    setGameState(initialState);
+    setShowTutorial(true);
     toast({
-      title: "Game Reset",
-      description: "Everyone mark yourselves as ready when you want to start a new game!",
+      title: "New Project Started",
+      description: "Let's try again with a clean slate!",
     });
   };
 
-  // Game timer
-  useEffect(() => {
-    if (gameState.status !== 'playing') return;
-    
-    const timer = setInterval(() => {
-      setGameState(prev => {
-        if (prev.timeRemaining <= 0) {
-          clearInterval(timer);
-          handleGameOver("time");
-          return prev;
-        }
-        
-        return {
-          ...prev,
-          timeRemaining: prev.timeRemaining - 1
-        };
-      });
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  }, [gameState.status]);
-
-  // Get debt color for progress bar
-  const getDebtColor = () => {
+  // Get color for tech debt progress bar
+  const getTechDebtColor = () => {
     if (gameState.techDebt < 30) return "bg-green-500";
     if (gameState.techDebt < 60) return "bg-yellow-500";
     return "bg-red-500";
   };
 
-  // Format time remaining
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  // Calculate percentage of implemented features
+  const featureCompletionPercentage = () => {
+    const implemented = gameState.features.filter(f => f.implemented).length;
+    return (implemented / gameState.features.length) * 100;
   };
 
-  // Get current player display
-  const getCurrentTurnPlayerName = () => {
-    const currentPlayer = players[gameState.currentPlayerIndex];
-    return currentPlayer ? currentPlayer.name : "Unknown";
-  };
+  // Tutorial component
+  const TutorialSection = () => (
+    <div className="space-y-6 text-center">
+      <h2 className="text-2xl font-bold text-garden-green-dark">Welcome to Tech Debt Simulator!</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <Card className="bg-purple-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Layers className="text-purple-600" />
+              What is Technical Debt?
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-left">
+            <p>Technical debt is the implied cost of additional rework caused by choosing an easy (limited) solution now instead of using a better approach that would take longer.</p>
+            <ul className="mt-4 space-y-2 list-disc list-inside">
+              <li>It's like taking a shortcut now but paying interest later</li>
+              <li>Accumulates when code quality is sacrificed for speed</li>
+              <li>Makes future changes slower and more expensive</li>
+              <li>Can eventually lead to project failure if ignored</li>
+            </ul>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-blue-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wrench className="text-blue-600" />
+              How to Play
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-left">
+            <p>You're managing a software project! Balance development speed with code quality.</p>
+            <ul className="mt-4 space-y-2 list-disc list-inside">
+              <li>Implement features to progress</li>
+              <li>Reduce technical debt by refactoring</li>
+              <li>Fix bugs to maintain customer satisfaction</li>
+              <li>Adjust quality focus slider to balance speed vs. quality</li>
+              <li>Manage resources carefully</li>
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Button onClick={startGame} className="mt-4 bg-garden-green-dark hover:bg-garden-green-mid text-lg px-8">
+        Start Project
+      </Button>
+    </div>
+  );
 
   return (
-    <div className="garden-container py-8">
+    <div className="garden-container py-8 animate-fade-in">
       <div className="max-w-6xl mx-auto">
+        {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-garden-green-dark mb-4">Technical Debt Challenge</h1>
+          <h1 className="text-4xl font-bold text-garden-green-dark mb-4">Technical Debt Simulator</h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            A multiplayer game where 5-10 players collaborate to manage a codebase.
-            Balance feature development with code maintenance to keep your system healthy!
+            Experience the challenges of balancing feature development with code quality.
+            Will you manage technical debt effectively or watch your project collapse?
           </p>
         </div>
 
-        {/* Player Join Section */}
-        {!localPlayerId && (
-          <Card className="mb-8 border-purple-200 shadow-lg">
-            <CardHeader>
-              <CardTitle>Join the Game</CardTitle>
-              <CardDescription>Enter your name to join this technical debt challenge</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <Label htmlFor="playerName">Your Name</Label>
-                  <Input 
-                    id="playerName" 
-                    value={playerName} 
-                    onChange={(e) => setPlayerName(e.target.value)} 
-                    placeholder="Enter your name"
-                    className="mt-1"
-                    disabled={isJoining}
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button 
-                    onClick={handleJoinGame} 
-                    disabled={isJoining || !playerName.trim()}
-                    className="gap-2 bg-purple-600 hover:bg-purple-700"
-                  >
-                    <Users />
-                    Join Game
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Tutorial */}
+        {showTutorial && <TutorialSection />}
 
-        {/* Ready Up Section */}
-        {localPlayerId && gameState.status === 'waiting' && (
-          <Card className="mb-8 border-blue-200 shadow-lg">
-            <CardHeader>
-              <CardTitle>Players ({players.length}/10)</CardTitle>
-              <CardDescription>
-                {players.length < 2 
-                  ? "We need at least 2 players to start" 
-                  : "Mark yourself as ready when you want to begin"
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {players.map(player => (
-                  <div 
-                    key={player.id} 
-                    className="flex items-center gap-3 p-3 rounded-lg"
-                    style={{
-                      backgroundColor: `${player.color}20`, // Transparent version of player color
-                      borderLeft: `4px solid ${player.color}`
-                    }}
-                  >
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: player.color }}
-                    ></div>
-                    <span className="font-medium flex-1">{player.name}</span>
-                    {player.isReady ? (
-                      <span className="text-green-500 text-sm font-medium">Ready</span>
-                    ) : player.id === localPlayerId ? (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={handleReady}
-                        className="text-xs"
-                      >
-                        Ready Up
-                      </Button>
-                    ) : (
-                      <span className="text-gray-400 text-sm">Not Ready</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Game Board (When Game is Active) */}
-        {localPlayerId && gameState.status === 'playing' && (
-          <>
-            <div className="grid gap-6 md:grid-cols-2">
-              {/* System Health Card */}
-              <Card className="border-red-200 shadow-lg">
+        {/* Game UI */}
+        {!showTutorial && gameState.status === 'playing' && (
+          <div className="space-y-6">
+            {/* Project Overview Panel */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Project Stats */}
+              <Card className="border-blue-200 shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Bomb className="text-red-500" />
-                    System Health Monitor
+                    <Settings className="text-blue-500" />
+                    Project Status
                   </CardTitle>
-                  <CardDescription className="flex items-center justify-between">
-                    <span>Time remaining: {formatTime(gameState.timeRemaining)}</span>
-                    <span className="flex items-center gap-1">
-                      <Bug className="text-red-500" /> {gameState.bugs} bugs
-                    </span>
+                  <CardDescription className="flex justify-between">
+                    <span>{gameState.companyName}</span>
+                    <span>Sprint {gameState.sprint}, Day {gameState.day}</span>
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -605,205 +606,422 @@ const TechDebtGame = () => {
                       <Layers className="text-orange-500" />
                       <div className="flex-1">
                         <div className="flex justify-between mb-1">
-                          <span>Technical Debt Level</span>
-                          <span>{gameState.techDebt}%</span>
+                          <span>Technical Debt</span>
+                          <span>{gameState.techDebt.toFixed(1)}%</span>
                         </div>
-                        <Progress value={gameState.techDebt} className={`h-3 ${getDebtColor()}`} />
+                        <Progress value={gameState.techDebt} className={`h-3 ${getTechDebtColor()}`} />
                       </div>
                     </div>
                     
-                    <div className="p-3 bg-purple-50 rounded-lg flex items-center gap-3">
-                      <Timer className="text-purple-600" />
+                    <div className="flex items-center gap-2">
+                      <Bug className="text-red-500" />
                       <div className="flex-1">
-                        <div className="text-sm font-medium">Current Turn</div>
-                        <div className="flex gap-2 items-center">
-                          <div 
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: players[gameState.currentPlayerIndex]?.color || '#888' }}
-                          ></div>
-                          <span className="font-semibold">{getCurrentTurnPlayerName()}</span>
+                        <div className="flex justify-between mb-1">
+                          <span>Bugs</span>
+                          <span>{gameState.bugs}</span>
                         </div>
+                        <Progress 
+                          value={Math.min(100, gameState.bugs * 5)} 
+                          className={`h-3 ${gameState.bugs > 5 ? 'bg-red-500' : 'bg-amber-500'}`} 
+                        />
                       </div>
-                      <div>
-                        <div className="text-sm">Round</div>
-                        <div className="text-lg font-bold text-center">{gameState.round}</div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <CircleCheck className="text-green-500" />
+                      <div className="flex-1">
+                        <div className="flex justify-between mb-1">
+                          <span>Feature Completion</span>
+                          <span>{featureCompletionPercentage().toFixed(0)}%</span>
+                        </div>
+                        <Progress value={featureCompletionPercentage()} className="h-3 bg-green-500" />
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Shield className="text-purple-500" />
+                      <div className="flex-1">
+                        <div className="flex justify-between mb-1">
+                          <span>Project Health</span>
+                          <span>{gameState.projectHealth}%</span>
+                        </div>
+                        <Progress 
+                          value={gameState.projectHealth} 
+                          className={`h-3 ${
+                            gameState.projectHealth > 70 ? 'bg-green-500' : 
+                            gameState.projectHealth > 40 ? 'bg-yellow-500' : 'bg-red-500'
+                          }`} 
+                        />
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Players Card */}
+              
+              {/* Resources & Message */}
               <Card className="border-green-200 shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Users className="text-garden-green-dark" />
-                    Team Members
+                    <Clock className="text-green-500" />
+                    Development Resources
                   </CardTitle>
                   <CardDescription>
-                    Work together to manage technical debt
+                    Available capacity and velocity
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="max-h-[240px] overflow-y-auto">
-                  <div className="space-y-2">
-                    {players.map(player => (
+                <CardContent className="space-y-4">
+                  <div className="p-4 rounded-lg bg-green-50 flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-gray-500">Available Resources</div>
+                      <div className="text-2xl font-bold text-garden-green-dark">{gameState.resources} hours</div>
+                    </div>
+                    <div className="text-5xl font-bold text-garden-green-dark opacity-20">⏱️</div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <ArrowRight className={`${gameState.velocity > 50 ? 'text-green-500' : 'text-amber-500'}`} />
+                    <div className="flex-1">
+                      <div className="flex justify-between mb-1">
+                        <span>Development Velocity</span>
+                        <span>{gameState.velocity.toFixed(0)}%</span>
+                      </div>
+                      <Progress 
+                        value={gameState.velocity} 
+                        className={`h-3 ${
+                          gameState.velocity > 70 ? 'bg-green-500' : 
+                          gameState.velocity > 40 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`} 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 rounded-lg bg-blue-50">
+                    <div className="text-sm font-medium text-gray-500 mb-1">Message:</div>
+                    <div className="text-blue-800">{gameState.message}</div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Quality Focus */}
+              <Card className="border-purple-200 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="text-purple-500" />
+                    Development Focus
+                  </CardTitle>
+                  <CardDescription>
+                    Balance between speed and quality
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between text-sm">
+                      <div className="flex items-center gap-1">
+                        <ArrowRight className="text-red-500" />
+                        <span>Fast Development</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span>Quality Code</span>
+                        <ArrowRight className="text-green-500" />
+                      </div>
+                    </div>
+                    <Slider 
+                      defaultValue={[50]} 
+                      value={[qualityFocus]}
+                      onValueChange={(val) => setQualityFocus(val[0])}
+                      max={100} 
+                      step={5}
+                      className="cursor-pointer"
+                    />
+                    <div className="text-center font-medium">
+                      {qualityFocus < 30 && "Moving very fast but accumulating lots of tech debt"}
+                      {qualityFocus >= 30 && qualityFocus < 60 && "Balanced approach"}
+                      {qualityFocus >= 60 && "Prioritizing clean code over speed"}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-3 bg-red-50 rounded-lg text-center">
+                      <div className="text-xs text-red-500 font-medium">Speed Impact</div>
+                      <div className="text-xl font-bold text-red-700">
+                        {qualityFocus < 50 ? "+" : ""}
+                        {Math.round((50 - qualityFocus) / 2)}%
+                      </div>
+                    </div>
+                    <div className="p-3 bg-green-50 rounded-lg text-center">
+                      <div className="text-xs text-green-500 font-medium">Debt Impact</div>
+                      <div className="text-xl font-bold text-green-700">
+                        {qualityFocus > 50 ? "-" : "+"}
+                        {Math.round(Math.abs(50 - qualityFocus) / 2)}%
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Features & Actions */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Feature List */}
+              <Card className="lg:col-span-2 border-amber-200 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Code className="text-amber-500" />
+                    Features to Implement
+                  </CardTitle>
+                  <CardDescription>
+                    Choose features to implement for your product
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-3">
+                    {gameState.features.map(feature => (
                       <div 
-                        key={player.id} 
-                        className={`flex items-center gap-2 p-2 rounded-lg ${player.isTurn ? 'bg-blue-50 border border-blue-200' : ''}`}
+                        key={feature.id} 
+                        className={`flex items-center p-3 rounded-lg border ${
+                          feature.implemented 
+                            ? 'bg-green-50 border-green-200' 
+                            : 'bg-white border-gray-200 hover:border-blue-300 transition-colors'
+                        }`}
                       >
-                        <div 
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: player.color }}
-                        ></div>
+                        <div className="mr-3">
+                          {feature.icon}
+                        </div>
                         <div className="flex-1">
-                          <div className="flex justify-between">
-                            <span className="font-medium">{player.name}</span>
-                            <span className="text-sm">Score: {player.score}</span>
-                          </div>
-                          <div className="flex gap-6 text-sm text-gray-500">
-                            <span>{player.resources} dev hours</span>
-                            <span>{player.features} features shipped</span>
+                          <div className="font-medium">{feature.name}</div>
+                          <div className="text-sm text-gray-500 flex flex-wrap gap-x-4">
+                            <span>Complexity: {feature.complexity}</span>
+                            <span>Tech Debt Risk: {feature.techDebtCost}</span>
                           </div>
                         </div>
-                        {player.isTurn && (
-                          <div className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
-                            Current Turn
-                          </div>
-                        )}
-                        {player.id === localPlayerId && (
-                          <div className="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded">
-                            You
-                          </div>
+                        {feature.implemented ? (
+                          <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
+                            Implemented
+                          </span>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                            onClick={() => implementFeature(feature.id)}
+                          >
+                            Implement
+                          </Button>
                         )}
                       </div>
                     ))}
                   </div>
                 </CardContent>
               </Card>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="mt-8">
-              <Card>
+              
+              {/* Actions */}
+              <Card className="border-blue-200 shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-lg">Your Actions</CardTitle>
-                  {isCurrentPlayerTurn() ? (
-                    <CardDescription>It's your turn! Choose an action</CardDescription>
-                  ) : (
-                    <CardDescription>
-                      Waiting for {getCurrentTurnPlayerName()} to take their turn
-                    </CardDescription>
-                  )}
+                  <CardTitle className="flex items-center gap-2">
+                    <Wrench className="text-blue-500" />
+                    Actions
+                  </CardTitle>
+                  <CardDescription>
+                    Manage your project
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                    <Button
-                      onClick={shipFeature}
-                      disabled={!isCurrentPlayerTurn() || (getCurrentPlayer()?.resources || 0) < 20}
-                      className="h-auto py-4 gap-3 flex-col items-center bg-purple-600 hover:bg-purple-700"
-                    >
-                      <CodeIcon className="h-6 w-6" />
-                      <div>
-                        <div className="font-medium">Ship Feature</div>
-                        <div className="text-xs opacity-90">Cost: 20h</div>
-                      </div>
-                    </Button>
-                    
+                  <div className="flex flex-col gap-2">
                     <Button
                       onClick={refactorCode}
-                      disabled={!isCurrentPlayerTurn() || (getCurrentPlayer()?.resources || 0) < 30}
                       variant="outline"
-                      className="h-auto py-4 gap-3 flex-col items-center border-green-600 text-green-700 hover:bg-green-50"
+                      className="justify-start border-green-300 text-green-700 hover:bg-green-50 py-6"
+                      disabled={gameState.resources < 15}
                     >
-                      <Wrench className="h-6 w-6" />
-                      <div>
+                      <Wrench className="mr-2" />
+                      <div className="text-left">
                         <div className="font-medium">Refactor Code</div>
-                        <div className="text-xs opacity-90">Cost: 30h</div>
+                        <div className="text-xs">Reduce tech debt. Cost: 15+ hours</div>
                       </div>
                     </Button>
                     
                     <Button
                       onClick={fixBugs}
-                      disabled={!isCurrentPlayerTurn() || (getCurrentPlayer()?.resources || 0) < 15 || gameState.bugs === 0}
                       variant="outline"
-                      className="h-auto py-4 gap-3 flex-col items-center border-red-600 text-red-700 hover:bg-red-50"
+                      className="justify-start border-red-300 text-red-700 hover:bg-red-50 py-6"
+                      disabled={gameState.bugs === 0 || gameState.resources < 5}
                     >
-                      <Bug className="h-6 w-6" />
-                      <div>
+                      <Bug className="mr-2" />
+                      <div className="text-left">
                         <div className="font-medium">Fix Bugs</div>
-                        <div className="text-xs opacity-90">Cost: 15h</div>
+                        <div className="text-xs">Fix up to 3 bugs. Cost: 5+ hours</div>
                       </div>
                     </Button>
                     
                     <Button
-                      onClick={takeRest}
-                      disabled={!isCurrentPlayerTurn()}
+                      onClick={addResources}
                       variant="outline"
-                      className="h-auto py-4 gap-3 flex-col items-center border-blue-600 text-blue-700 hover:bg-blue-50"
+                      className="justify-start border-blue-300 text-blue-700 hover:bg-blue-50 py-6"
                     >
-                      <Shield className="h-6 w-6" />
-                      <div>
-                        <div className="font-medium">Rest Team</div>
-                        <div className="text-xs opacity-90">Gain: 40h</div>
+                      <Users className="mr-2" />
+                      <div className="text-left">
+                        <div className="font-medium">Add Resources</div>
+                        <div className="text-xs">Add 30 developer hours</div>
+                      </div>
+                    </Button>
+                    
+                    <Button
+                      onClick={advanceTime}
+                      className="justify-start py-6"
+                    >
+                      <Timer className="mr-2" />
+                      <div className="text-left">
+                        <div className="font-medium">Next Day</div>
+                        <div className="text-xs">Advance to next day</div>
                       </div>
                     </Button>
                   </div>
                 </CardContent>
               </Card>
             </div>
-          </>
+
+            {/* Scenario Popup */}
+            {showScenario && currentScenario && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <Card className="w-full max-w-md border-purple-300 shadow-2xl animate-scale-in">
+                  <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Settings className="text-purple-500" />
+                      {currentScenario.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="mb-6">{currentScenario.description}</p>
+                    <div className="space-y-3">
+                      {currentScenario.options.map((option: any, i: number) => (
+                        <Button 
+                          key={i} 
+                          onClick={() => handleScenarioChoice(i)}
+                          className="w-full justify-start py-4"
+                          variant={i === 0 ? "default" : "outline"}
+                        >
+                          <div className="text-left">
+                            <div>{option.text}</div>
+                            <div className="text-xs mt-1 opacity-80">
+                              {Object.entries(option.effect).map(([key, value]: [string, any]) => (
+                                <span key={key} className="mr-3">
+                                  {key}: {value > 0 ? "+" : ""}{value}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </Button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
         )}
 
-        {/* Game Over Section */}
-        {localPlayerId && gameState.status === 'gameOver' && (
-          <Card className="mb-8 border-purple-200 shadow-lg">
-            <CardHeader>
-              <CardTitle>Game Over!</CardTitle>
-              <CardDescription>{gameState.message}</CardDescription>
+        {/* Game Over */}
+        {!showTutorial && gameState.status === 'gameOver' && (
+          <Card className="border-purple-300 shadow-xl max-w-2xl mx-auto animate-scale-in">
+            <CardHeader className={gameState.gameOverReason?.includes("success") ? "bg-green-50" : "bg-red-50"}>
+              <CardTitle className="text-2xl flex items-center justify-center gap-2">
+                {gameState.gameOverReason?.includes("success") ? (
+                  <CircleCheck className="text-green-500" />
+                ) : (
+                  <CircleX className="text-red-500" />
+                )}
+                {gameState.message}
+              </CardTitle>
+              <CardDescription className="text-center text-base">
+                {gameState.gameOverReason}
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">Final Scores</h3>
-                <div className="space-y-2">
-                  {players.map((player, index) => (
-                    <div 
-                      key={player.id} 
-                      className={`flex items-center gap-3 p-3 rounded-lg ${index === 0 ? 'bg-yellow-50 border border-yellow-200' : ''}`}
-                    >
-                      <div className="text-lg font-bold">{index + 1}</div>
-                      <div 
-                        className="w-3 h-3 rounded-full" 
-                        style={{ backgroundColor: player.color }}
-                      ></div>
-                      <span className="font-medium flex-1">{player.name}</span>
-                      <span className="font-bold">{player.score} pts</span>
+            <CardContent className="pt-6">
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div className="p-4 rounded-lg bg-blue-50">
+                    <div className="text-sm">Technical Debt</div>
+                    <div className="text-2xl font-bold">{gameState.techDebt.toFixed(1)}%</div>
+                  </div>
+                  <div className="p-4 rounded-lg bg-amber-50">
+                    <div className="text-sm">Days Passed</div>
+                    <div className="text-2xl font-bold">{gameState.day}</div>
+                  </div>
+                  <div className="p-4 rounded-lg bg-green-50">
+                    <div className="text-sm">Features Completed</div>
+                    <div className="text-2xl font-bold">
+                      {gameState.features.filter(f => f.implemented).length}/{gameState.features.length}
                     </div>
-                  ))}
+                  </div>
+                  <div className="p-4 rounded-lg bg-red-50">
+                    <div className="text-sm">Bugs Remaining</div>
+                    <div className="text-2xl font-bold">{gameState.bugs}</div>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="mt-4 flex justify-center">
-                <Button onClick={restartGame} className="gap-2">
-                  Play Again
-                </Button>
+                
+                <div className="text-center pt-2">
+                  <Button onClick={restartGame} className="px-8">
+                    Start New Project
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
         )}
 
-        <div className="mt-8 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
-          <h3 className="font-semibold mb-2">How Technical Debt Works:</h3>
-          <ul className="list-disc list-inside space-y-1">
-            <li><span className="font-medium">Technical Debt</span>: Represents shortcuts taken during development</li>
-            <li><span className="font-medium">Ship Feature</span>: Quickly adds functionality but increases technical debt</li> 
-            <li><span className="font-medium">Refactor Code</span>: Improves code quality and reduces technical debt</li>
-            <li><span className="font-medium">Fix Bugs</span>: Resolves issues caused by high technical debt</li>
-            <li><span className="font-medium">Rest Team</span>: Recover developer hours for your next actions</li>
-            <li>If technical debt reaches 100%, the system collapses</li>
-            <li>Each round, high technical debt spawns new bugs</li>
-            <li>Work together: some players can focus on features while others maintain code quality</li>
-          </ul>
-        </div>
+        {/* Educational Section */}
+        {!showTutorial && (
+          <Card className="mt-8 bg-blue-50 border-blue-200">
+            <CardHeader>
+              <CardTitle>Understanding Technical Debt</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <h3 className="font-bold flex items-center gap-1">
+                    <ArrowRight className="text-red-500 h-4 w-4" />
+                    What Causes Tech Debt
+                  </h3>
+                  <ul className="list-disc list-inside text-sm space-y-1">
+                    <li>Pressure to deliver quickly</li>
+                    <li>Insufficient planning</li>
+                    <li>Lack of documentation</li>
+                    <li>Postponed refactoring</li>
+                    <li>Changing requirements</li>
+                  </ul>
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="font-bold flex items-center gap-1">
+                    <ArrowRight className="text-amber-500 h-4 w-4" />
+                    Consequences of Tech Debt
+                  </h3>
+                  <ul className="list-disc list-inside text-sm space-y-1">
+                    <li>Slower development velocity</li>
+                    <li>Increased bug rate</li>
+                    <li>Higher maintenance costs</li>
+                    <li>Difficulty adding new features</li>
+                    <li>Developer frustration</li>
+                  </ul>
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="font-bold flex items-center gap-1">
+                    <ArrowRight className="text-green-500 h-4 w-4" />
+                    Managing Tech Debt Effectively
+                  </h3>
+                  <ul className="list-disc list-inside text-sm space-y-1">
+                    <li>Regular refactoring sessions</li>
+                    <li>Code reviews and quality standards</li>
+                    <li>Technical debt tracking</li>
+                    <li>Automated testing</li>
+                    <li>Balancing short and long-term goals</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
