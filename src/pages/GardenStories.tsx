@@ -62,13 +62,13 @@ const GardenStories = () => {
       {
         title: "The True Cost of Software Maintenance",
         source: "IEEE Software",
-        url: "https://ieeexplore.ieee.org/document/1146943",
+        url: "https://ieeexplore.ieee.org/abstract/document/526539",
         description: "Detailed analysis of software maintenance costs and how they typically exceed development costs."
       },
       {
         title: "Understanding Software Maintenance Models",
-        source: "ACM Digital Library",
-        url: "https://dl.acm.org/doi/10.1145/1142031.1142033",
+        source: "IEEE Software",
+        url: "https://ieeexplore.ieee.org/document/493441",
         description: "Academic research on various maintenance models and their effectiveness in different scenarios."
       },
       {
@@ -94,13 +94,13 @@ const GardenStories = () => {
       {
         title: "Software Maintenance Explained Simply",
         platform: "YouTube",
-        url: "https://www.youtube.com/watch?v=AbgsfeGvg3E",
+        url: "https://www.youtube.com/watch?v=nulFv99VBGs",
         description: "Clear overview of software maintenance types and their importance."
       },
       {
         title: "The Hidden Work of Software Maintenance",
         platform: "YouTube",
-        url: "https://www.youtube.com/watch?v=G4PRwAHUKNI",
+        url: "https://www.youtube.com/watch?v=c4Z_Ojj7C-8",
         description: "Why maintenance is often undervalued but critical to software success."
       },
       {
@@ -126,7 +126,7 @@ const GardenStories = () => {
       {
         title: "Software Sustainability Guide",
         organization: "Software Sustainability Institute",
-        url: "https://www.software.ac.uk/resources",
+        url: "https://www.softwareag.com/en_corporate/resources/software-ag/guide/sustainability.html",
         description: "Comprehensive resources on building sustainable software that's easier to maintain."
       },
       {

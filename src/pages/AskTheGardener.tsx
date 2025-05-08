@@ -163,50 +163,7 @@ const AskTheGardener = () => {
         </div>
       </section>
 
-      {/* Consultation Section */}
-      <section className="garden-section bg-garden-green-light bg-opacity-20">
-        <div className="garden-container">
-          <div className="text-center mb-12">
-            <h2 className="text-garden-green-dark">Need Expert Gardening Help?</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              For more complex questions or personalized guidance,
-              schedule a consultation with our software maintenance experts.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="garden-card text-center">
-              <h3 className="text-xl font-bold mb-2 text-garden-green-dark">Quick Assessment</h3>
-              <p className="text-gray-600 mb-4 h-24">
-                A 30-minute call to evaluate your current maintenance challenges and provide initial guidance.
-              </p>
-              <p className="text-2xl font-bold text-garden-earth mb-6">Free</p>
-              <Button className="w-full btn-garden">Schedule Call</Button>
-            </div>
-
-            <div className="garden-card text-center border-2 border-garden-green-mid transform scale-105 shadow-xl">
-              <div className="bg-garden-green-mid text-white py-2 mb-4 mx-[-24px]">
-                <p className="font-medium">Most Popular</p>
-              </div>
-              <h3 className="text-xl font-bold mb-2 text-garden-green-dark">Garden Audit</h3>
-              <p className="text-gray-600 mb-4 h-24">
-                A comprehensive review of your software maintenance practices with detailed recommendations.
-              </p>
-              <p className="text-2xl font-bold text-garden-earth mb-6">$499</p>
-              <Button className="w-full btn-garden">Book Audit</Button>
-            </div>
-
-            <div className="garden-card text-center">
-              <h3 className="text-xl font-bold mb-2 text-garden-green-dark">Maintenance Plan</h3>
-              <p className="text-gray-600 mb-4 h-24">
-                Custom maintenance strategy development with implementation guidance and follow-up support.
-              </p>
-              <p className="text-2xl font-bold text-garden-earth mb-6">$1,299</p>
-              <Button className="w-full btn-garden">Get Started</Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      
     </>
   );
 };
