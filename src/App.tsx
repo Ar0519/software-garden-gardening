@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +14,7 @@ import AskTheGardener from "./pages/AskTheGardener";
 import NotFound from "./pages/NotFound";
 import Quiz from "./pages/Quiz";
 import TechDebtGame from "./pages/TechDebtGame";
+import CocomoModel from "./pages/CocomoModel";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +35,7 @@ const App = () => (
               <Route path="/ask-the-gardener" element={<AskTheGardener />} />
               <Route path="/quiz" element={<Quiz />} />
               <Route path="/tech-debt-game" element={<TechDebtGame />} />
+              <Route path="/cocomo-model" element={<CocomoModel />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
