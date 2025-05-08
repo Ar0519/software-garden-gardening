@@ -19,7 +19,8 @@ const Navbar = () => {
     { name: "Garden Stories", path: "/garden-stories" },
     { name: "Ask The Gardener", path: "/ask-the-gardener" },
     { name: "Quiz", path: "/quiz" },
-    { name: "Tech Debt Game", path: "/tech-debt-game" }
+    { name: "Tech Debt Game", path: "/tech-debt-game" },
+    { name: "COCOMO Model", path: "/cocomo-model" }
   ];
 
   // Check if a link is active
